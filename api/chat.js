@@ -1,9 +1,7 @@
 // File: api/chat.js
 
-// --- CORRECTED: Use 'import' instead of 'require' ---
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// This is how we get the secret API key from Vercel's environment variables.
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // This is the default export for Vercel's API routes
@@ -13,26 +11,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { history, systemInstruction } = req.body;
+    const { history } = req.body; // We only need the history now
 
     if (!history) {
       return res.status(400).json({ error: 'Chat history is required.' });
     }
 
-    const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash-latest",
-        systemInstruction: systemInstruction,
+    // Initialize the model without a system instruction
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    
+    // Use the simpler generateContent which is great for stateless API calls
+    const result = await model.generateContent({
+      contents: history,
     });
-    
-    // We send the previous history to the model for context
-    const chat = model.startChat({
-        history: history.slice(0, -1), // Send all but the last user message
-    });
-    
-    // And we send the newest user message to get the next response
-    const lastUserMessage = history[history.length - 1];
-    
-    const result = await chat.sendMessage(lastUserMessage.parts[0].text);
+
     const response = result.response;
     const text = response.text();
 
