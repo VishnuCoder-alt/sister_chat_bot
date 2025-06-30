@@ -13,6 +13,7 @@
   "description": "a chatbot for my sister",
   "dependencies": {
     "@google/genai": "^1.7.0",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+     "@google/generative-ai": "^0.8.0"
   }
 }
