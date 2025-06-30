@@ -1,10 +1,12 @@
 // File: api/chat.js
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+// --- CORRECTED: Use 'import' instead of 'require' ---
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// IMPORTANT: This is how we get the secret API key from Vercel's environment variables.
+// This is how we get the secret API key from Vercel's environment variables.
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// This is the default export for Vercel's API routes
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -22,14 +24,13 @@ export default async function handler(req, res) {
         systemInstruction: systemInstruction,
     });
     
-    // Vercel's free plan has a 10-second timeout. For chat, we don't need history,
-    // we just need the last user message to generate a response.
-    // The front-end will manage the full history.
-    const lastUserMessage = history.pop(); // Get the latest message
-
+    // We send the previous history to the model for context
     const chat = model.startChat({
-        history: history, // Start with the previous context
+        history: history.slice(0, -1), // Send all but the last user message
     });
+    
+    // And we send the newest user message to get the next response
+    const lastUserMessage = history[history.length - 1];
     
     const result = await chat.sendMessage(lastUserMessage.parts[0].text);
     const response = result.response;
@@ -38,7 +39,8 @@ export default async function handler(req, res) {
     res.status(200).json({ text });
 
   } catch (error) {
-    console.error('Error calling Gemini API:', error);
+    // This will now log more specific errors from the Gemini API if they happen
+    console.error('Error inside API function:', error);
     res.status(500).json({ error: 'Failed to get response from AI' });
   }
-}   
+}
